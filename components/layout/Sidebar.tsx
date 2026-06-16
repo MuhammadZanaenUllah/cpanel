@@ -5,10 +5,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, Globe, Mail, FolderOpen, Database, Server,
   Shield, FileCode, Clock, HardDrive, GitBranch, Box, BarChart2,
-  ChevronRight, LogOut, User, Cpu, Lock
+  ChevronRight, LogOut, User, Cpu, Lock, TerminalSquare
 } from 'lucide-react';
 
-const nav = [
+const baseNav = [
   {
     section: 'Main',
     items: [
@@ -54,6 +54,16 @@ const nav = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+
+  const nav = user?.features?.terminal
+    ? [
+        ...baseNav,
+        {
+          section: 'Terminal',
+          items: [{ href: '/terminal', label: 'Terminal', icon: TerminalSquare }],
+        },
+      ]
+    : baseNav;
 
   return (
     <aside className="w-60 min-h-screen bg-[#0f172a] border-r border-slate-900/80 flex flex-col shrink-0 fixed left-0 top-0 bottom-0 z-30 overflow-y-auto shadow-2xl">

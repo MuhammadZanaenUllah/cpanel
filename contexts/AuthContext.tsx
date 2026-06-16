@@ -7,6 +7,7 @@ interface User {
   username: string;
   role: string;
   token: string;
+  features: Record<string, boolean>;
 }
 
 interface AuthContextType {
@@ -18,6 +19,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
+async function fetchFeatures(): Promise<Record<string, boolean>> {
+  try {
+    const res = await api.get('/cpanel/account');
+    return (res.data.data.features as Record<string, boolean>) || {};
+  } catch {
+    return {};
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,7 +35,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const stored = localStorage.getItem('cpanel_user');
     if (stored) {
-      try { setUser(JSON.parse(stored)); } catch {}
+      try {
+        const parsed: User = JSON.parse(stored);
+        setUser(parsed);
+        // Refresh features in background so sidebar reflects any admin changes
+        fetchFeatures().then((features) => {
+          setUser((prev) => {
+            if (!prev) return prev;
+            const updated = { ...prev, features };
+            localStorage.setItem('cpanel_user', JSON.stringify(updated));
+            return updated;
+          });
+        });
+      } catch {}
     }
     setLoading(false);
   }, []);
@@ -33,8 +55,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (username: string, password: string) => {
     const res = await api.post('/cpanel/login', { username, password });
     const { token, role, accountId } = res.data.data;
-    const userData: User = { accountId, username, role, token };
+
+    // Set token in localStorage first so the api interceptor picks it up for the features call
     localStorage.setItem('cpanel_token', token);
+
+    const features = await fetchFeatures();
+
+    const userData: User = { accountId, username, role, token, features };
     localStorage.setItem('cpanel_user', JSON.stringify(userData));
     setUser(userData);
   };
