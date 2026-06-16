@@ -6,7 +6,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import EmptyState from '@/components/ui/EmptyState';
 import api, { getErrorMessage } from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Mail, Plus, Trash2, Key, Forward, Repeat2, Shield } from 'lucide-react';
+import { Mail, Plus, Trash2, Key, Forward, Repeat2, Shield, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 
 interface EmailAccount { id: string; local_part: string; domain: string; quota_mb: number; status: string; }
@@ -35,6 +35,13 @@ export default function EmailPage() {
     setLoading(false);
   };
   useEffect(() => { loadAll(); }, []);
+
+  const openWebmail = async (email: string) => {
+    try {
+      const res = await api.get('/cpanel/email/webmail', { params: { email } });
+      window.open(res.data.data.url, '_blank');
+    } catch (err) { toast.error(getErrorMessage(err)); }
+  };
 
   const handleAdd = async () => {
     setSaving(true);
@@ -122,6 +129,7 @@ export default function EmailPage() {
                           <td><span className={`badge ${a.status === 'active' ? 'badge-success' : 'badge-danger'}`}>{a.status}</span></td>
                           <td>
                             <div className="flex gap-1.5">
+                              <button className="btn btn-icon btn-secondary text-slate-400" title="Access Webmail" onClick={() => openWebmail(`${a.local_part}@${a.domain}`)}><ExternalLink size={13} /></button>
                               <button className="btn btn-icon btn-secondary text-slate-400" title="Change Password" onClick={() => toast('Password change — coming soon')}><Key size={13} /></button>
                               <button className="btn btn-icon btn-danger" onClick={() => setDeleting(a.id)}><Trash2 size={13} /></button>
                             </div>

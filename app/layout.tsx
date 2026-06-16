@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={wsFont.className}>
         <AuthProvider>
           {children}
-          <Toaster position="top-right" toastOptions={{ style: { fontSize: 13 } }} />
+          <Toaster position="top-center" toastOptions={{ style: { fontSize: 13 } }} />
         </AuthProvider>
       </body>
     </html>
